@@ -6,7 +6,7 @@ metadata:
     app: github-action-demo
 spec:
   # 4 replicas so canary weights map to whole pods: 25%→1, 50%→2, 75%→3.
-  replicas: 1
+  replicas: 4
   revisionHistoryLimit: 3
   selector:
     matchLabels:
