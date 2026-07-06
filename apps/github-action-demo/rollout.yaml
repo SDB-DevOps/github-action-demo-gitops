@@ -5,19 +5,20 @@ metadata:
   labels:
     app: github-action-demo
 spec:
-  replicas: 1
+  # 4 replicas so canary weights map to whole pods: 25%→1, 50%→2, 75%→3.
+  replicas: 4
   revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: github-action-demo
   strategy:
     canary:
-      # Progressive rollout: shift traffic in steps, pausing between each.
-      # With a single replica this still gates promotion on the pauses;
-      # bump `replicas` above for finer-grained traffic weighting.
+      # Progressive canary. The first `pause: {}` is indefinite — the rollout
+      # holds at 25% until you run `kubectl argo rollouts promote`, so you can
+      # inspect the canary before it advances. Later steps auto-advance on time.
       steps:
         - setWeight: 25
-        - pause: { duration: 30s }
+        - pause: {}                 # hold here for manual inspection
         - setWeight: 50
         - pause: { duration: 30s }
         - setWeight: 75
