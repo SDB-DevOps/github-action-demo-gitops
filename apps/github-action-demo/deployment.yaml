@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: github-action-demo
+  labels:
+    app: github-action-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: github-action-demo
+  template:
+    metadata:
+      labels:
+        app: github-action-demo
+    spec:
+      containers:
+        - name: github-action-demo
+          # The tag is managed by Kustomize (see kustomization.yaml `images:`).
+          # CI opens a PR that bumps the tag to an immutable sha-<short> value.
+          image: ghcr.io/sdb-devops/github-action-demo
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: NODE_ENV
+              value: "production"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+      # Needed if the ghcr.io image/package is private:
+      # imagePullSecrets:
+      #   - name: ghcr-credentials

@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: github-action-demo
+  namespace: argocd
+  # Keep the app around until Argo finishes pruning children on delete.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    # 👉 Replace with the URL of the GitOps repo you create.
+    repoURL: https://github.com/sdb-devops/github-action-demo-gitops.git
+    targetRevision: main
+    path: apps/github-action-demo
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    automated:
+      prune: true      # delete resources removed from git
+      selfHeal: true   # revert manual cluster changes back to git state
+    syncOptions:
+      - CreateNamespace=true
