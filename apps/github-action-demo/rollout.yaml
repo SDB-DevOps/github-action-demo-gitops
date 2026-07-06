@@ -1,14 +1,27 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: github-action-demo
   labels:
     app: github-action-demo
 spec:
   replicas: 1
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: github-action-demo
+  strategy:
+    canary:
+      # Progressive rollout: shift traffic in steps, pausing between each.
+      # With a single replica this still gates promotion on the pauses;
+      # bump `replicas` above for finer-grained traffic weighting.
+      steps:
+        - setWeight: 25
+        - pause: { duration: 30s }
+        - setWeight: 50
+        - pause: { duration: 30s }
+        - setWeight: 75
+        - pause: { duration: 30s }
   template:
     metadata:
       labels:
