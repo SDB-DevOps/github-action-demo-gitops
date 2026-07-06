@@ -54,11 +54,11 @@ spec:
             periodSeconds: 15
           resources:
             requests:
-              cpu: 50m
-              memory: 64Mi
+              cpu: 25m
+              memory: 50Mi
             limits:
-              cpu: 250m
-              memory: 128Mi
+              cpu: 50m
+              memory: 100Mi
       # Needed if the ghcr.io image/package is private:
       # imagePullSecrets:
       #   - name: ghcr-credentials
