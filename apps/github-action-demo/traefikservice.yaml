@@ -1,0 +1,18 @@
+# Weighted Traefik service. Argo Rollouts rewrites the two `weight` values at
+# each canary step (e.g. stable=75 / canary=25). Initial values are just the
+# resting/steady state (all traffic to stable).
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: github-action-demo
+  labels:
+    app: github-action-demo
+spec:
+  weighted:
+    services:
+      - name: github-action-demo-stable
+        port: 80
+        weight: 100
+      - name: github-action-demo-canary
+        port: 80
+        weight: 0

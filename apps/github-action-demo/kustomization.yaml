@@ -4,6 +4,8 @@ kind: Kustomization
 resources:
 - rollout.yaml
 - service.yaml
+- traefikservice.yaml
+- ingressroute.yaml
 
 # `newTag` is the single source of truth for what is deployed.
 # The deploy workflow runs `kustomize edit set image` to bump this to an

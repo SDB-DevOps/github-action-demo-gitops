@@ -5,17 +5,25 @@ metadata:
   labels:
     app: github-action-demo
 spec:
-  # 4 replicas so canary weights map to whole pods: 25%→1, 50%→2, 75%→3.
-  replicas: 4
+  # With Traefik traffic routing the weight is enforced at the gateway, not by
+  # pod ratio, so replicas no longer need to divide the weights. Keep 2 for
+  # stable-side redundancy during a rollout.
+  replicas: 2
   revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: github-action-demo
   strategy:
     canary:
-      # Progressive canary. The first `pause: {}` is indefinite — the rollout
-      # holds at 25% until you run `kubectl argo rollouts promote`, so you can
-      # inspect the canary before it advances. Later steps auto-advance on time.
+      # Traefik splits requests precisely by weight between these two Services.
+      # The controller rewrites the TraefikService weights at each step.
+      canaryService: github-action-demo-canary
+      stableService: github-action-demo-stable
+      trafficRouting:
+        traefik:
+          weightedTraefikServiceName: github-action-demo
+      # The first `pause: {}` is indefinite — the rollout holds at 25% until you
+      # run `kubectl argo rollouts promote`. Later steps auto-advance on time.
       steps:
         - setWeight: 25
         - pause: {}                 # hold here for manual inspection
