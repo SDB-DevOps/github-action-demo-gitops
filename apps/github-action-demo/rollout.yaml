@@ -26,9 +26,9 @@ spec:
       # run `kubectl argo rollouts promote`. Later steps auto-advance on time.
       steps:
         - setWeight: 25
-        - pause: {}                 # hold here for manual inspection
+        - pause: { duration: 30s }                 
         - setWeight: 50
-        - pause: { duration: 30s }
+        - pause: {}                              # hold here for manual inspection
         - setWeight: 75
         - pause: { duration: 30s }
   template:
