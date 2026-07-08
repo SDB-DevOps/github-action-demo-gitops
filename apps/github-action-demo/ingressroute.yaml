@@ -16,3 +16,5 @@ spec:
       services:
         - name: github-action-demo
           kind: TraefikService
+        # - name: github-action-demo-active   # kind 默认 Service,不用 TraefikService
+        #   port: 80

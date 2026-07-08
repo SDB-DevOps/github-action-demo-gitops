@@ -1,0 +1,36 @@
+# Canary success-rate check, queried against the minimal Prometheus that
+# scrapes Traefik. Referenced from the Rollout's canary `analysis` steps.
+#
+# Traefik labels each backend `default-github-action-demo-<stable|canary>-80@kubernetes`
+# (confirmed in Prometheus). The query below scopes strictly to the canary backend.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  labels:
+    app: github-action-demo
+spec:
+  args:
+    - name: prometheus-addr
+      value: http://prometheus.monitoring.svc:9090
+  metrics:
+    - name: canary-success-rate
+      interval: 30s
+      count: 5                              # sample 5 times before deciding
+      successCondition: result[0] >= 0.95   # >=95% 2xx to pass
+      failureLimit: 2                        # 2 bad samples -> fail -> auto rollback
+      provider:
+        prometheus:
+          address: "{{args.prometheus-addr}}"
+          # `or on() vector(1)` is a no-data fallback: when the canary backend
+          # has no requests yet (cold start / low traffic), the ratio is empty,
+          # which would otherwise fail successCondition and trigger a false
+          # rollback. Falling back to 1 treats "no data" as healthy.
+          query: |
+            (
+              sum(rate(traefik_service_requests_total{
+                service="default-github-action-demo-canary-80@kubernetes", code=~"2.."}[2m]))
+              /
+              sum(rate(traefik_service_requests_total{
+                service="default-github-action-demo-canary-80@kubernetes"}[2m]))
+            ) or on() vector(1)

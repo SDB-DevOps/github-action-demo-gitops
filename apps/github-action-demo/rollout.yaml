@@ -13,6 +13,15 @@ spec:
   selector:
     matchLabels:
       app: github-action-demo
+
+  # strategy:
+  #   blueGreen:
+  #     activeService: github-action-demo-active     # 线上流量入口
+  #     previewService: github-action-demo-preview   # 预览新版用
+  #     autoPromotionEnabled: false                  # 关掉自动晋升 → 手动 promote(适合试验)
+  #     scaleDownDelaySeconds: 30                     # 切换后旧版保留 30s,方便秒回滚
+      # prePromotionAnalysis / postPromotionAnalysis 可选:接指标自动放行/回滚
+
   strategy:
     canary:
       # Traefik splits requests precisely by weight between these two Services.
@@ -22,15 +31,20 @@ spec:
       trafficRouting:
         traefik:
           weightedTraefikServiceName: github-action-demo
-      # The first `pause: {}` is indefinite — the rollout holds at 25% until you
-      # run `kubectl argo rollouts promote`. Later steps auto-advance on time.
+      # Fully automated: after each setWeight, an AnalysisRun queries Prometheus
+      # for canary success rate. Pass -> advance automatically; fail -> abort and
+      # roll back to stable. No manual `promote` needed.
       steps:
         - setWeight: 25
-        - pause: { duration: 30s }                 
+        - analysis:
+            templates:
+              - templateName: success-rate
         - setWeight: 50
-        - pause: {}                              # hold here for manual inspection
+        - analysis:
+            templates:
+              - templateName: success-rate
         - setWeight: 75
-        - pause: { duration: 30s }
+        - pause: { duration: 60s }
   template:
     metadata:
       labels:
