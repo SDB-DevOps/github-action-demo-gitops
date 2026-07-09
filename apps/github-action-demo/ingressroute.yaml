@@ -1,6 +1,7 @@
-# Exposes the app through Traefik's `web` entrypoint (port 80) and routes to the
-# weighted TraefikService above. Replace PathPrefix(`/`) with Host(`your.domain`)
-# once you have a hostname.
+# Exposes the app through Traefik's `web` entrypoint (port 80). For blue-green
+# it points straight at the active Service — no weighted TraefikService needed.
+# Promotion flips `active`'s selector to green, so external traffic follows
+# automatically. Replace PathPrefix(`/`) with Host(`your.domain`) when you have one.
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -14,7 +15,8 @@ spec:
     - match: PathPrefix(`/`)
       kind: Rule
       services:
-        - name: github-action-demo
-          kind: TraefikService
-        # - name: github-action-demo-active   # kind 默认 Service,不用 TraefikService
-        #   port: 80
+        - name: github-action-demo-active
+          port: 80
+        # --- Canary variant (previous setup; use this instead of active for canary) ---
+        # - name: github-action-demo
+        #   kind: TraefikService

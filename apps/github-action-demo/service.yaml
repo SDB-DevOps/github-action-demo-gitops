@@ -1,10 +1,10 @@
-# Two Services for the canary split. Argo Rollouts injects the
-# `rollouts-pod-template-hash` selector into each so `stable` only targets the
-# stable ReplicaSet and `canary` only targets the canary ReplicaSet.
+# Blue-green Services. Argo Rollouts injects the `rollouts-pod-template-hash`
+# selector: `active` targets the live (blue) ReplicaSet, `preview` targets the
+# new (green) ReplicaSet. On promotion the controller flips `active` to green.
 apiVersion: v1
 kind: Service
 metadata:
-  name: github-action-demo-stable
+  name: github-action-demo-active
   labels:
     app: github-action-demo
 spec:
@@ -20,7 +20,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: github-action-demo-canary
+  name: github-action-demo-preview
   labels:
     app: github-action-demo
 spec:
@@ -33,24 +33,35 @@ spec:
       port: 80
       targetPort: 3000
 
+# --- Canary Services (previous setup; uncomment to revert to canary) ---
 # apiVersion: v1
 # kind: Service
 # metadata:
-#   name: github-action-demo-active
-#   labels: { app: github-action-demo }
+#   name: github-action-demo-stable
+#   labels:
+#     app: github-action-demo
 # spec:
 #   type: ClusterIP
-#   selector: { app: github-action-demo }
+#   selector:
+#     app: github-action-demo
 #   ports:
-#     - { name: http, protocol: TCP, port: 80, targetPort: 3000 }
+#     - name: http
+#       protocol: TCP
+#       port: 80
+#       targetPort: 3000
 # ---
 # apiVersion: v1
 # kind: Service
 # metadata:
-#   name: github-action-demo-preview
-#   labels: { app: github-action-demo }
+#   name: github-action-demo-canary
+#   labels:
+#     app: github-action-demo
 # spec:
 #   type: ClusterIP
-#   selector: { app: github-action-demo }
+#   selector:
+#     app: github-action-demo
 #   ports:
-#     - { name: http, protocol: TCP, port: 80, targetPort: 3000 }
+#     - name: http
+#       protocol: TCP
+#       port: 80
+#       targetPort: 3000

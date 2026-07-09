@@ -4,9 +4,10 @@ kind: Kustomization
 resources:
 - rollout.yaml
 - service.yaml
-- traefikservice.yaml
 - ingressroute.yaml
-- analysistemplate.yaml
+# Canary-only (uncomment to revert to canary):
+# - traefikservice.yaml
+# - analysistemplate.yaml
 
 # `newTag` is the single source of truth for what is deployed.
 # The deploy workflow runs `kustomize edit set image` to bump this to an

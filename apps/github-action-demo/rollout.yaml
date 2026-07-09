@@ -5,46 +5,45 @@ metadata:
   labels:
     app: github-action-demo
 spec:
-  # With Traefik traffic routing the weight is enforced at the gateway, not by
-  # pod ratio, so replicas no longer need to divide the weights. Keep 2 for
-  # stable-side redundancy during a rollout.
+  # Blue-green runs the new (green) version at full scale alongside the old
+  # (blue) one, then flips the active Service to green on promotion. Expect ~2x
+  # pods during the window.
   replicas: 2
   revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: github-action-demo
 
-  # strategy:
-  #   blueGreen:
-  #     activeService: github-action-demo-active     # 线上流量入口
-  #     previewService: github-action-demo-preview   # 预览新版用
-  #     autoPromotionEnabled: false                  # 关掉自动晋升 → 手动 promote(适合试验)
-  #     scaleDownDelaySeconds: 30                     # 切换后旧版保留 30s,方便秒回滚
-      # prePromotionAnalysis / postPromotionAnalysis 可选:接指标自动放行/回滚
-
   strategy:
-    canary:
-      # Traefik splits requests precisely by weight between these two Services.
-      # The controller rewrites the TraefikService weights at each step.
-      canaryService: github-action-demo-canary
-      stableService: github-action-demo-stable
-      trafficRouting:
-        traefik:
-          weightedTraefikServiceName: github-action-demo
-      # Fully automated: after each setWeight, an AnalysisRun queries Prometheus
-      # for canary success rate. Pass -> advance automatically; fail -> abort and
-      # roll back to stable. No manual `promote` needed.
-      steps:
-        - setWeight: 25
-        - analysis:
-            templates:
-              - templateName: success-rate
-        - setWeight: 50
-        - analysis:
-            templates:
-              - templateName: success-rate
-        - setWeight: 75
-        - pause: { duration: 60s }
+    blueGreen:
+      activeService: github-action-demo-active     # serves production traffic
+      previewService: github-action-demo-preview   # points at green for pre-promotion testing
+      autoPromotionEnabled: false                  # hold until you run `promote`
+      scaleDownDelaySeconds: 30                     # keep old version 30s after switch for fast rollback
+      # No steps / setWeight in blue-green — it's all-or-nothing, not gradual.
+
+  # --- Canary strategy (previous setup) ---
+  # To revert: comment out the blueGreen block above and uncomment this, then
+  # re-add traefikservice.yaml + analysistemplate.yaml in kustomization.yaml and
+  # switch service.yaml / ingressroute.yaml back to their canary variants.
+  # strategy:
+  #   canary:
+  #     canaryService: github-action-demo-canary
+  #     stableService: github-action-demo-stable
+  #     trafficRouting:
+  #       traefik:
+  #         weightedTraefikServiceName: github-action-demo
+  #     steps:
+  #       - setWeight: 25
+  #       - analysis:
+  #           templates:
+  #             - templateName: success-rate
+  #       - setWeight: 50
+  #       - analysis:
+  #           templates:
+  #             - templateName: success-rate
+  #       - setWeight: 75
+  #       - pause: { duration: 60s }
   template:
     metadata:
       labels:
