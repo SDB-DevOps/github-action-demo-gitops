@@ -15,4 +15,4 @@ resources:
 # ArgoCD to sync the new image into the cluster.
 images:
 - name: ghcr.io/sdb-devops/github-action-demo
-  newTag: sha-515bc12
+  newTag: sha-a0026bf
