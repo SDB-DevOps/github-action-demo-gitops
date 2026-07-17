@@ -14,36 +14,36 @@ spec:
     matchLabels:
       app: github-action-demo
 
-  strategy:
-    blueGreen:
-      activeService: github-action-demo-active     # serves production traffic
-      previewService: github-action-demo-preview   # points at green for pre-promotion testing
-      autoPromotionEnabled: false                  # hold until you run `promote`
-      scaleDownDelaySeconds: 30                     # keep old version 30s after switch for fast rollback
+  # strategy:
+  #   blueGreen:
+  #     activeService: github-action-demo-active     # serves production traffic
+  #     previewService: github-action-demo-preview   # points at green for pre-promotion testing
+  #     autoPromotionEnabled: false                  # hold until you run `promote`
+  #     scaleDownDelaySeconds: 30                     # keep old version 30s after switch for fast rollback
       # No steps / setWeight in blue-green — it's all-or-nothing, not gradual.
 
   # --- Canary strategy (previous setup) ---
   # To revert: comment out the blueGreen block above and uncomment this, then
   # re-add traefikservice.yaml + analysistemplate.yaml in kustomization.yaml and
   # switch service.yaml / ingressroute.yaml back to their canary variants.
-  # strategy:
-  #   canary:
-  #     canaryService: github-action-demo-canary
-  #     stableService: github-action-demo-stable
-  #     trafficRouting:
-  #       traefik:
-  #         weightedTraefikServiceName: github-action-demo
-  #     steps:
-  #       - setWeight: 25
-  #       - analysis:
-  #           templates:
-  #             - templateName: success-rate
-  #       - setWeight: 50
-  #       - analysis:
-  #           templates:
-  #             - templateName: success-rate
-  #       - setWeight: 75
-  #       - pause: { duration: 60s }
+  strategy:
+    canary:
+      canaryService: github-action-demo-canary
+      stableService: github-action-demo-stable
+      trafficRouting:
+        traefik:
+          weightedTraefikServiceName: github-action-demo
+      steps:
+        - setWeight: 25
+        - analysis:
+            templates:
+              - templateName: success-rate
+        - setWeight: 50
+        - analysis:
+            templates:
+              - templateName: success-rate
+        - setWeight: 75
+        - pause: { duration: 60s }
   template:
     metadata:
       labels:

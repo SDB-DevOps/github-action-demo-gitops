@@ -15,8 +15,8 @@ spec:
     - match: PathPrefix(`/`)
       kind: Rule
       services:
-        - name: github-action-demo-active
-          port: 80
+        # - name: github-action-demo-active
+        #   port: 80
         # --- Canary variant (previous setup; use this instead of active for canary) ---
-        # - name: github-action-demo
-        #   kind: TraefikService
+        - name: github-action-demo
+          kind: TraefikService
