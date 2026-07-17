@@ -1,8 +1,11 @@
 # Canary success-rate check, queried against the minimal Prometheus that
 # scrapes Traefik. Referenced from the Rollout's canary `analysis` steps.
 #
-# Traefik labels each backend `default-github-action-demo-<stable|canary>-80@kubernetes`
-# (confirmed in Prometheus). The query below scopes strictly to the canary backend.
+# Traefik labels each backend `default-github-action-demo-<stable|canary>-80@kubernetescrd`
+# (confirmed in Prometheus; the CRD provider uses the `@kubernetescrd` suffix). The
+# query below scopes strictly to the canary backend. Note: the canary series only
+# appears once a rollout step sets the canary weight > 0, since at rest all traffic
+# goes to stable (weight 0 -> no requests -> no series).
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -29,8 +32,8 @@ spec:
           query: |
             (
               sum(rate(traefik_service_requests_total{
-                service="default-github-action-demo-canary-80@kubernetes", code=~"2.."}[2m]))
+                service="default-github-action-demo-canary-80@kubernetescrd", code=~"2.."}[2m]))
               /
               sum(rate(traefik_service_requests_total{
-                service="default-github-action-demo-canary-80@kubernetes"}[2m]))
+                service="default-github-action-demo-canary-80@kubernetescrd"}[2m]))
             ) or on() vector(1)
